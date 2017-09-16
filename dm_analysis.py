@@ -1,18 +1,27 @@
+from math import *
 import os
 import warnings
-from math import *
-import numpy as np
-import matplotlib.pyplot as plt
 
 import h5py
+import matplotlib.pyplot as plt
+import numpy as np
 
-from scipy.optimize import curve_fit
 from matplotlib.colors import LogNorm
 from mpl_toolkits.mplot3d import Axes3D
+from scipy.optimize import curve_fit
 
 class Analyzer():
+    """ Utility class for Analyzing data for Dark Matter Simulations. """
 
     def __init__(self, test_dir, test, timeslice, overwriting = False):
+        """
+        Constructor for the Analyzer object.
+        
+        :param test_dir: The directory storing the tests.
+        :param test: The name of the test to analyze.
+        :param timeslice: The timeslice of the data
+        :param overwriting: Boolean to determine whether or not to overwrite previous analysis data.
+        """
         self.file = h5py.File(test_dir + test + '/output/snap_' + timeslice + '.hdf5', 'r')
         self.timeslice = timeslice
 
@@ -21,33 +30,42 @@ class Analyzer():
 
         print("Made analyzer on file " + test)
 
-    def print_directory(self, extension = ''):
-        # Prints the contents of the file at a certain file depth.
+    def print_directory(self, file = ''):
+        """
+        Prints the contents of an h5py directory structure at some specified location.
+        :param directory: The location of the directory to print out.
+        """
         print("File System:")
-        if extension == '':
+        if directory == '':
             for value in self.file.values():
                 print(value)
         else:
-            for value in self.file[extension].values():
+            for value in self.file[directory].values():
                 print(value)
         print('')
 
-    def get_values(self, dataset = ''):
-        # Push set of data into a numpy array.
+    def get_values(self, dataset):
+        """
+        Read h5py values into a numpy array.
+        :param dataset: Dataset in h5py directory structure to parse into a numpy array.
+        :return: Numpy array containing data at specified location.
+        """
         arr = np.zeros(self.file["PartType1/" + dataset].shape)
         self.file["PartType1/" + dataset].read_direct(arr)
         return arr
 
     def make_magnitudes(self, data):
-        # Takes a list of vectors and returns a list of their norms.
-        magnitudes = np.zeros(data.shape[0])
-
-        for i, n in enumerate(data):
-            magnitudes[i] = sqrt(sum([n[j]**2 for j in range(data.shape[1])]))
-
-        return magnitudes
+        """
+        Takes a list of vectors and returns a list of their norms.
+        :param data: Numpy array of shape (num_vectors, len_vectors)
+        :return: Numpy array, mags, of shape (num_vectors) where mags[i] is the norm of data[i].
+        """
+        return np.apply_along_axis(np.linalg.norm, 1, data)
 
     def get_density(self, sample_bins):
+        """
+        TODO: Documentation
+        """
         bins = sample_bins[:-1]
 
         self.SIDM_densities = np.sum(self.get_values("SIDM_Density"), 1)
@@ -66,7 +84,11 @@ class Analyzer():
         return densities
 
     def center(self, data):
-        # Takes a list of data and shifts them so that the origin is at center of mass.
+        """
+        Takes a list of data and shifts them so that the origin is at center of mass.
+        :param data: TODO: What is the shape of this data?
+        :return: data shifted such that the origin is at the center of mass.
+        """
         try:
             # If the data are a list of scalars...
             shape = data.shape[1]
@@ -82,7 +104,7 @@ class Analyzer():
         center_of_mass = center / sum(self.masses)
         shifted_arr = np.zeros(data.shape)
 
-        if shape != 1:    
+        if shape != 1:
             for i, n in enumerate(data):
                 for j in range(shape):
                     shifted_arr[i][j] = n[j] - center_of_mass[j]
@@ -93,14 +115,20 @@ class Analyzer():
         return shifted_arr
 
     def make_hist(self, a, bins = 'auto', range = None, density = None):
-        # Makes a numpy histogram with equal bins and frequencies.
+        """
+        Makes a numpy histogram with equal bins and frequencies.
+        TODO: More documentation
+        """
         H, bins = np.histogram(a, bins = bins, range = range, density = density)
         edges = bins[:-1]
 
         return np.array([edges, H])
 
     def make_densities(self, bins = 50, range = None, density = False):
-        # Makes a special density histogram.
+        """
+        Makes a special density histogram.
+        TODO: More documentation
+        """
         H, bins = np.histogram(self.distances, bins = bins, range = range, weights = self.masses, density = density)
         edges = bins[:-1]
 
@@ -110,7 +138,10 @@ class Analyzer():
         return np.array([edges, H / volumes])
 
     def make_spherical_velocities(self):
-        # Creates radial and tangential components of velocity from a set of particles' positions and velocities.
+        """
+        Creates radial and tangential components of velocity from a set of particles' positions and velocities.
+        TODO: More documentation
+        """
         rad_components = tan_components = np.zeros(self.displacements.shape[0])
         
         for i, x in enumerate(self.displacements):
@@ -124,6 +155,9 @@ class Analyzer():
         return rad_components, tan_components
 
     def get_v0_beta(self, sample_bins, verbose = True):
+        """
+        TODO: Documentation
+        """
         # Suppressing warnings for finding undefined variance.
         print("Making v0 and betas...")
 
@@ -160,6 +194,9 @@ class Analyzer():
         return v0, betas
 
     def density_2d(self, plotting = True, verbose = True):
+        """
+        TODO: Documentation
+        """
 
         if verbose: print("2d mass density plot:")
               
@@ -181,6 +218,9 @@ class Analyzer():
         return xedges, yedges, H
 
     def density_1d(self, plotting = True, fitting_func = 'hern', verbose = True):
+        """
+        TODO: Documentation
+        """
 
         if fitting_func == 'hern':
             fitting_func = lambda r, a: sum(self.masses)/(2*pi) * (a / r) * 1/(r + a)**3
@@ -223,6 +263,9 @@ class Analyzer():
         return density_hist
 
     def cheap_density(self, verbose = True):
+        """
+        TODO: Documentation
+        """
 
         file_exists = os.path.exists(self.output_file + '/density/' + self.timeslice)
 
@@ -251,6 +294,9 @@ class Analyzer():
             return sample_bins[:-1], density_hist
 
     def velocity(self, plotting = True, v0 = True, beta = True, verbose = True):
+        """
+        TODO: Documentation
+        """
 
         if verbose: print("Speed plot")
 
@@ -312,6 +358,9 @@ class Analyzer():
         return speed_hist, v0, betas
 
     def excited_ratio(self, verbose = True):
+        """
+        TODO: Documentation
+        """
         ratio = np.mean(self.get_values("SIDM_State"))
                         
         data_destination = self.output_file + '/ratios.txt'

@@ -4,8 +4,12 @@ from dm_analysis import *
 from scipy import integrate
 
 class Plotter():
+    """ Utility class for plotting data analyzed by Analyzer. """
     
     def __init__(self, test_dir, tests = 'all', timeslices = 'auto', overwriting = False, verbose = False):
+        """
+        TODO: Documentation
+        """
         init_dir = os.path.abspath(os.getcwd())
 
         os.chdir(test_dir)
@@ -51,6 +55,9 @@ class Plotter():
         os.chdir(init_dir)
 
     def load_time_file(self, data, test, t = None):
+        """
+        TODO: Documentation
+        """
         # Two cases, the plot is over a specific snapshot (t != None), or it is over the time domain (t = None).
         if t is not None:
             
@@ -104,6 +111,9 @@ class Plotter():
             return info
 
     def make_label(self, test, i_or_ie = False):
+        """
+        TODO: Documentation
+        """
         label = str(int(test.split('_')[1])/10)
         
         if i_or_ie:
@@ -112,6 +122,9 @@ class Plotter():
         return label
                             
     def plot_density(self):
+        """
+        TODO: Documentation
+        """
         for t in self.timeslices:
             # For all of the time slices...
             fig = plt.figure(t)
@@ -140,6 +153,9 @@ class Plotter():
             plt.close()
 
     def plot_sup_factors(self):
+        """
+        TODO: Documentation
+        """
         # We defined the suppression factor to be the integral over the log-space in both the time and density dimensions.
 
         total_fig = plt.figure()
@@ -190,6 +206,9 @@ class Plotter():
         plt.close()
 
     def plot_ratios(self):
+        """
+        TODO: Documentation
+        """
         total_fig = plt.figure()
         total_ax = total_fig.add_subplot(111)
 
